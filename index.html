@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>캐시 비율 계산기</title>
+  <title>캐시 / 포인트 / 게임머니 계산기</title>
   <style>
     * {
       box-sizing: border-box;
@@ -18,11 +18,12 @@
       justify-content: center;
       align-items: center;
       min-height: 100vh;
+      padding: 20px;
     }
 
     .wrap {
       width: 100%;
-      max-width: 430px;
+      max-width: 500px;
       background: #fff;
       padding: 28px;
       border-radius: 18px;
@@ -35,12 +36,46 @@
       text-align: center;
     }
 
+    .tabs {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+      margin-bottom: 20px;
+    }
+
+    .tab-btn {
+      margin: 0;
+      background: #eef1f5;
+      color: #333;
+      border: 1px solid #d6dbe1;
+    }
+
+    .tab-btn.active {
+      background: #4f7cff;
+      color: white;
+      border-color: #4f7cff;
+    }
+
+    .section {
+      display: none;
+    }
+
+    .section.active {
+      display: block;
+    }
+
     .ratio-row {
       display: grid;
       grid-template-columns: 1fr auto 1fr;
       gap: 8px;
       align-items: center;
       margin-bottom: 18px;
+    }
+
+    .grid-2 {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
     }
 
     label {
@@ -92,10 +127,15 @@
       padding: 16px;
       border-radius: 12px;
       background: #f0f4ff;
-      line-height: 1.5;
+      line-height: 1.7;
       font-size: 16px;
       font-weight: bold;
       word-break: keep-all;
+      white-space: pre-line;
+    }
+
+    .red-text {
+      color: #e60000;
     }
 
     .hint {
@@ -104,46 +144,123 @@
       font-size: 13px;
       line-height: 1.5;
     }
+
+    .small-title {
+      margin: 18px 0 10px;
+      padding-top: 12px;
+      border-top: 1px solid #edf0f3;
+      font-size: 15px;
+      font-weight: bold;
+      color: #333;
+    }
+
+    @media (max-width: 460px) {
+      .grid-2 {
+        grid-template-columns: 1fr;
+      }
+    }
   </style>
 </head>
 <body>
   <div class="wrap">
-    <h1>캐시 비율 계산기</h1>
+    <h1>캐시 / 포인트 / 게임머니 계산기</h1>
 
-    <div class="ratio-row">
-      <div>
-        <label for="baseCash">캐시 입력</label>
-        <input id="baseCash" type="text" inputmode="numeric" placeholder="예: 53000" />
+    <div class="tabs">
+      <button class="tab-btn active" onclick="showTab('ratio', this)">비율 계산</button>
+      <button class="tab-btn" onclick="showTab('efficiency', this)">효율 비교</button>
+    </div>
+
+    <!-- 비율 계산 메뉴 -->
+    <div id="ratio" class="section active">
+      <div class="ratio-row">
+        <div>
+          <label for="baseCash">캐시 입력</label>
+          <input id="baseCash" type="text" inputmode="numeric" placeholder="예: 53000" />
+        </div>
+
+        <div class="colon">:</div>
+
+        <div>
+          <label for="baseMoney">게임머니 입력</label>
+          <input id="baseMoney" type="text" inputmode="numeric" placeholder="예: 100000000" />
+        </div>
       </div>
 
-      <div class="colon">:</div>
+      <div class="input-box">
+        <label for="mode">계산 방향</label>
+        <select id="mode">
+          <option value="cashToMoney">캐시 → 게임머니</option>
+          <option value="moneyToCash">게임머니 → 캐시</option>
+        </select>
+      </div>
 
-      <div>
-        <label for="baseMoney">게임머니 입력</label>
-        <input id="baseMoney" type="text" inputmode="numeric" placeholder="예: 100000000" />
+      <div class="input-box">
+        <label for="targetValue">캐시 OR 게임머니</label>
+        <input id="targetValue" type="text" inputmode="numeric" placeholder="계산할 값을 입력하세요" />
+      </div>
+
+      <button onclick="calculateRatio()">계산 버튼</button>
+
+      <div id="ratioResult" class="result">결과 : 값을 입력하고 계산 버튼을 눌러주세요.</div>
+
+      <div class="hint">
+        예시: 캐시 53,000원이 게임머니 1억이면<br />
+        기준값에 53000 : 100000000 을 입력하면 됩니다.
       </div>
     </div>
 
-    <div class="input-box">
-      <label for="mode">계산 방향</label>
-      <select id="mode">
-        <option value="cashToMoney">캐시 → 게임머니</option>
-        <option value="moneyToCash">게임머니 → 캐시</option>
-      </select>
-    </div>
+    <!-- 효율 비교 메뉴 -->
+    <div id="efficiency" class="section">
+      <div class="small-title">1. 기준 비율 입력</div>
 
-    <div class="input-box">
-      <label for="targetValue">캐시 OR 게임머니</label>
-      <input id="targetValue" type="text" inputmode="numeric" placeholder="계산할 값을 입력하세요" />
-    </div>
+      <div class="grid-2">
+        <div class="input-box">
+          <label for="effCash">캐시</label>
+          <input id="effCash" type="text" inputmode="numeric" placeholder="예: 54000" />
+        </div>
 
-    <button onclick="calculate()">계산 버튼</button>
+        <div class="input-box">
+          <label for="effCashMoney">해당 게임머니</label>
+          <input id="effCashMoney" type="text" inputmode="numeric" placeholder="예: 100000000" />
+        </div>
+      </div>
 
-    <div id="result" class="result">결과 : 값을 입력하고 계산 버튼을 눌러주세요.</div>
+      <div class="grid-2">
+        <div class="input-box">
+          <label for="effPoint">포인트</label>
+          <input id="effPoint" type="text" inputmode="numeric" placeholder="예: 68000" />
+        </div>
 
-    <div class="hint">
-      예시: 캐시 53,000원이 게임머니 1억이면<br />
-      기준값에 53000 : 100000000 을 입력하면 됩니다.
+        <div class="input-box">
+          <label for="effPointMoney">해당 게임머니</label>
+          <input id="effPointMoney" type="text" inputmode="numeric" placeholder="예: 100000000" />
+        </div>
+      </div>
+
+      <div class="small-title">2. 아이템 가격 입력</div>
+
+      <div class="grid-2">
+        <div class="input-box">
+          <label for="itemMoneyPrice">게임머니 가격</label>
+          <input id="itemMoneyPrice" type="text" inputmode="numeric" placeholder="예: 1200000" />
+        </div>
+
+        <div class="input-box">
+          <label for="itemPointPrice">포인트 가격</label>
+          <input id="itemPointPrice" type="text" inputmode="numeric" placeholder="예: 600" />
+        </div>
+      </div>
+
+      <button onclick="compareEfficiency()">어떤 구매가 더 저렴한지 계산</button>
+
+      <div id="efficiencyResult" class="result">결과 : 기준 비율과 아이템 가격을 입력해주세요.</div>
+
+      <div class="hint">
+        예시: 54,000캐시 = 1억 게임머니,<br />
+        68,000포인트 = 1억 게임머니,<br />
+        아이템 가격이 120만 게임머니 또는 600포인트일 때<br />
+        둘을 캐시 기준으로 환산해서 비교합니다.
+      </div>
     </div>
   </div>
 
@@ -156,12 +273,29 @@
       return Math.round(value).toLocaleString('ko-KR');
     }
 
-    function calculate() {
+    function formatDecimal(value) {
+      return Number(value.toFixed(2)).toLocaleString('ko-KR');
+    }
+
+    function showTab(tabId, button) {
+      document.querySelectorAll('.section').forEach(section => {
+        section.classList.remove('active');
+      });
+
+      document.querySelectorAll('.tab-btn').forEach(btn => {
+        btn.classList.remove('active');
+      });
+
+      document.getElementById(tabId).classList.add('active');
+      button.classList.add('active');
+    }
+
+    function calculateRatio() {
       const baseCash = onlyNumber(document.getElementById('baseCash').value);
       const baseMoney = onlyNumber(document.getElementById('baseMoney').value);
       const targetValue = onlyNumber(document.getElementById('targetValue').value);
       const mode = document.getElementById('mode').value;
-      const result = document.getElementById('result');
+      const result = document.getElementById('ratioResult');
 
       if (!baseCash || !baseMoney || !targetValue) {
         result.textContent = '결과 : 기준 캐시, 기준 게임머니, 계산할 값을 모두 입력해주세요.';
@@ -178,8 +312,64 @@
         result.textContent = `결과 : ${formatNumber(targetValue)} 캐시에 해당하는 게임머니는 ${formatNumber(gameMoney)} 입니다.`;
       } else {
         const cash = targetValue * baseCash / baseMoney;
-        result.textContent = `결과 : ${formatNumber(targetValue)} 게임머니에 해당하는 캐시는 ${formatNumber(cash)} 입니다.`;
+        result.textContent = `결과 : ${formatNumber(targetValue)} 게임머니에 해당하는 캐시는 ${formatDecimal(cash)} 입니다.`;
       }
+    }
+
+    function compareEfficiency() {
+      const cash = onlyNumber(document.getElementById('effCash').value);
+      const cashMoney = onlyNumber(document.getElementById('effCashMoney').value);
+      const point = onlyNumber(document.getElementById('effPoint').value);
+      const pointMoney = onlyNumber(document.getElementById('effPointMoney').value);
+      const itemMoneyPrice = onlyNumber(document.getElementById('itemMoneyPrice').value);
+      const itemPointPrice = onlyNumber(document.getElementById('itemPointPrice').value);
+      const result = document.getElementById('efficiencyResult');
+
+      if (!cash || !cashMoney || !point || !pointMoney || !itemMoneyPrice || !itemPointPrice) {
+        result.textContent = '결과 : 캐시/게임머니 비율, 포인트/게임머니 비율, 아이템 가격을 모두 입력해주세요.';
+        return;
+      }
+
+      if (cash <= 0 || cashMoney <= 0 || point <= 0 || pointMoney <= 0 || itemMoneyPrice <= 0 || itemPointPrice <= 0) {
+        result.textContent = '결과 : 0보다 큰 숫자만 입력해주세요.';
+        return;
+      }
+
+      // 1 게임머니의 캐시 가치
+      const cashPerMoney = cash / cashMoney;
+
+      // 1 포인트가 게임머니 기준으로 얼마인지
+      const moneyPerPoint = pointMoney / point;
+
+      // 1 포인트의 캐시 환산 가치
+      const cashPerPoint = moneyPerPoint * cashPerMoney;
+
+      // 아이템을 게임머니로 샀을 때 캐시 환산 가격
+      const moneyBuyCashValue = itemMoneyPrice * cashPerMoney;
+
+      // 아이템을 포인트로 샀을 때 캐시 환산 가격
+      const pointBuyCashValue = itemPointPrice * cashPerPoint;
+
+      const diff = Math.abs(moneyBuyCashValue - pointBuyCashValue);
+
+      let winnerText = '';
+      if (moneyBuyCashValue < pointBuyCashValue) {
+        winnerText = `<span class="red-text">게임머니</span>로 구매하는 게 더 <span class="red-text">저렴합니다</span>.
+약 ${formatDecimal(diff)} 캐시만큼 이득입니다.`;
+      } else if (pointBuyCashValue < moneyBuyCashValue) {
+        winnerText = `<span class="red-text">포인트</span>로 구매하는 게 더 <span class="red-text">저렴합니다</span>.
+약 ${formatDecimal(diff)} 캐시만큼 이득입니다.`;
+      } else {
+        winnerText = '둘 다 같은 가격입니다.';
+      }
+
+      result.innerHTML =
+        `게임머니 구매 환산가 : 약 ${formatDecimal(moneyBuyCashValue)} 캐시
+` +
+        `포인트 구매 환산가 : 약 ${formatDecimal(pointBuyCashValue)} 캐시
+
+` +
+        winnerText;
     }
 
     // 입력할 때 자동으로 콤마 표시
@@ -189,6 +379,14 @@
         input.value = raw ? Number(raw).toLocaleString('ko-KR') : '';
       });
     });
+
+    // 예시값 자동 입력
+    document.getElementById('effCash').value = Number(54000).toLocaleString('ko-KR');
+    document.getElementById('effCashMoney').value = Number(100000000).toLocaleString('ko-KR');
+    document.getElementById('effPoint').value = Number(68000).toLocaleString('ko-KR');
+    document.getElementById('effPointMoney').value = Number(100000000).toLocaleString('ko-KR');
+    document.getElementById('itemMoneyPrice').value = Number(1200000).toLocaleString('ko-KR');
+    document.getElementById('itemPointPrice').value = Number(600).toLocaleString('ko-KR');
   </script>
 </body>
 </html>
