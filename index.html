@@ -91,15 +91,23 @@
         <div class="input-box"><label for="profitDiscount">캐시 충전 할인율 (%)</label><input id="profitDiscount" class="percent-input" type="text" inputmode="decimal" value="7" /></div>
       </div>
       <div class="grid-2">
-        <div class="input-box"><label for="profitItemsPerBundle">묶음당 아이템 개수</label><input id="profitItemsPerBundle" class="comma-input" type="text" inputmode="numeric" value="1" placeholder="예: 30" /></div>
+        <div class="input-box"><label for="profitItemsPerBundle">묶음당 기본 아이템 개수</label><input id="profitItemsPerBundle" class="comma-input" type="text" inputmode="numeric" value="1" placeholder="예: 30" /></div>
         <div class="input-box"><label for="profitBundleCount">구매 묶음 수</label><input id="profitBundleCount" class="comma-input" type="text" inputmode="numeric" value="1" placeholder="예: 2" /></div>
       </div>
-      <div class="small-title">2. 게임머니 판매 정보</div>
+
+      <div class="small-title">2. 기본 아이템 판매 정보</div>
       <div class="grid-2">
-        <div class="input-box"><label for="profitSaleMoney">개당 판매가 (게임머니)</label><input id="profitSaleMoney" class="comma-input" type="text" inputmode="numeric" placeholder="예: 25000000" /></div>
+        <div class="input-box"><label for="profitSaleMoney">기본 아이템 개당 판매가 (게임머니)</label><input id="profitSaleMoney" class="comma-input" type="text" inputmode="numeric" placeholder="예: 25000000" /></div>
         <div class="input-box"><label for="profitSaleFee">판매 수수료 (%)</label><input id="profitSaleFee" class="percent-input" type="text" inputmode="decimal" value="0" /></div>
       </div>
-      <div class="small-title">3. 게임머니 현금 환산 비율</div>
+
+      <div class="small-title">3. 보너스 품목 판매 정보</div>
+      <div class="grid-2">
+        <div class="input-box"><label for="profitBonusItemsPerBundle">묶음당 보너스 품목 수량</label><input id="profitBonusItemsPerBundle" class="comma-input" type="text" inputmode="numeric" value="0" placeholder="예: 3" /></div>
+        <div class="input-box"><label for="profitBonusSaleMoney">보너스 품목 개당 판매가 (게임머니)</label><input id="profitBonusSaleMoney" class="comma-input" type="text" inputmode="numeric" value="0" placeholder="예: 500000" /></div>
+      </div>
+
+      <div class="small-title">4. 게임머니 현금 환산 비율</div>
       <div class="grid-2">
         <div class="input-box"><label for="profitMoneyUnit">기준 게임머니</label><input id="profitMoneyUnit" class="comma-input" type="text" inputmode="numeric" value="100,000,000" /></div>
         <div class="input-box"><label for="profitWonValue">해당 현금 가치 (원)</label><input id="profitWonValue" class="comma-input" type="text" inputmode="numeric" placeholder="예: 54000" /></div>
@@ -198,42 +206,92 @@
       const discount = onlyNumber(document.getElementById('profitDiscount').value) || 0;
       const saleMoney = onlyNumber(document.getElementById('profitSaleMoney').value);
       const saleFee = onlyNumber(document.getElementById('profitSaleFee').value) || 0;
+      const bonusItemsPerBundle = onlyNumber(document.getElementById('profitBonusItemsPerBundle').value) || 0;
+      const bonusSaleMoney = onlyNumber(document.getElementById('profitBonusSaleMoney').value) || 0;
       const moneyUnit = onlyNumber(document.getElementById('profitMoneyUnit').value);
       const wonValue = onlyNumber(document.getElementById('profitWonValue').value);
       const result = document.getElementById('profitResult');
 
-      if (!bundleCash || !saleMoney || !moneyUnit || !wonValue) return result.textContent = '결과 : 묶음 가격, 개당 판매가, 환산 비율을 모두 입력해주세요.';
-      if ([bundleCash, itemsPerBundle, bundleCount, saleMoney, moneyUnit, wonValue].some(v => v <= 0) || discount < 0 || discount >= 100 || saleFee < 0 || saleFee >= 100) return result.textContent = '결과 : 입력값을 확인해주세요.';
+      if (!bundleCash || !saleMoney || !moneyUnit || !wonValue) {
+        result.textContent = '결과 : 묶음 가격, 기본 아이템 개당 판매가, 환산 비율을 모두 입력해주세요.';
+        return;
+      }
+
+      if ([bundleCash, itemsPerBundle, bundleCount, saleMoney, moneyUnit, wonValue].some(v => v <= 0) || bonusItemsPerBundle < 0 || bonusSaleMoney < 0 || discount < 0 || discount >= 100 || saleFee < 0 || saleFee >= 100) {
+        result.textContent = '결과 : 입력값을 확인해주세요.';
+        return;
+      }
 
       const totalItemCount = itemsPerBundle * bundleCount;
+      const totalBonusItemCount = bonusItemsPerBundle * bundleCount;
       const originalCashCost = bundleCash * bundleCount;
       const actualCost = originalCashCost * (1 - discount / 100);
-      const grossMoney = saleMoney * totalItemCount;
+      const mainGrossMoney = saleMoney * totalItemCount;
+      const bonusGrossMoney = bonusSaleMoney * totalBonusItemCount;
+      const grossMoney = mainGrossMoney + bonusGrossMoney;
       const netMoney = grossMoney * (1 - saleFee / 100);
       const cashoutValue = netMoney * wonValue / moneyUnit;
       const profit = cashoutValue - actualCost;
       const profitRate = profit / actualCost * 100;
-      const breakEven = actualCost * moneyUnit / wonValue / (1 - saleFee / 100);
+
+      function targetUnitSaleMoney(targetProfitRate) {
+        const targetWon = actualCost * (1 + targetProfitRate / 100);
+        const requiredGrossMoney = targetWon * moneyUnit / wonValue / (1 - saleFee / 100);
+        return Math.max(0, requiredGrossMoney - bonusGrossMoney) / totalItemCount;
+      }
+
+      const breakEvenUnitSaleMoney = targetUnitSaleMoney(0);
+      const target3 = targetUnitSaleMoney(3);
+      const target5 = targetUnitSaleMoney(5);
+      const target10 = targetUnitSaleMoney(10);
+      const target15 = targetUnitSaleMoney(15);
+
       const verdict = profit >= 0
         ? `<span class="red-text">수익</span>입니다. 약 <span class="red-text">${formatDecimal(profitRate)}%</span> 남습니다.`
         : `<span class="red-text">손실</span>입니다. 약 <span class="red-text">${formatDecimal(Math.abs(profitRate))}%</span> 부족합니다.`;
 
-      const breakEvenUnitSaleMoney = breakEven / totalItemCount;
+      result.innerHTML =
+        `묶음 캐시 가격 : ${formatDecimal(bundleCash)} 캐시
+` +
+        `구매 묶음 수 : ${formatNumber(bundleCount)}개
+` +
+        `묶음당 기본 아이템 수량 : ${formatNumber(itemsPerBundle)}개
+` +
+        `총 기본 아이템 수량 : ${formatNumber(totalItemCount)}개
+` +
+        `묶음당 보너스 품목 수량 : ${formatNumber(bonusItemsPerBundle)}개
+` +
+        `총 보너스 품목 수량 : ${formatNumber(totalBonusItemCount)}개
+` +
+        `할인 충전 적용 원가 : ${formatDecimal(actualCost)} 원
+` +
+        `기본 아이템 판매액 : ${formatDecimal(mainGrossMoney)} 게임머니
+` +
+        `보너스 품목 판매액 : ${formatDecimal(bonusGrossMoney)} 게임머니
+` +
+        `수수료 차감 전 총 판매액 : ${formatDecimal(grossMoney)} 게임머니
+` +
+        `판매 후 수령 게임머니 : ${formatDecimal(netMoney)}
+` +
+        `게임머니 현금 환산가 : ${formatDecimal(cashoutValue)} 원
+` +
+        `순이익 : ${formatDecimal(profit)} 원
 
-      result.innerHTML = `묶음 캐시 가격 : ${formatDecimal(bundleCash)} 캐시
-구매 묶음 수 : ${formatNumber(bundleCount)}개
-묶음당 수량 : ${formatNumber(itemsPerBundle)}개
-총 판매 수량 : ${formatNumber(totalItemCount)}개
-차감 전 캐시 원가 : ${formatDecimal(originalCashCost)} 캐시
-할인 충전 적용 원가 : ${formatDecimal(actualCost)} 원
-개당 판매가 : ${formatDecimal(saleMoney)} 게임머니
-수수료 차감 전 판매액 : ${formatDecimal(grossMoney)} 게임머니
-판매 후 수령 게임머니 : ${formatDecimal(netMoney)}
-게임머니 현금 환산가 : ${formatDecimal(cashoutValue)} 원
-순이익 : ${formatDecimal(profit)} 원
-손익분기 개당 판매가 : 약 ${formatDecimal(breakEvenUnitSaleMoney)} 게임머니
+` +
+        `<span class="red-text">기본 아이템 개당 판매가 가이드</span>
+` +
+        `손익분기 : 약 ${formatDecimal(breakEvenUnitSaleMoney)} 게임머니
+` +
+        `3% 수익 : 약 ${formatDecimal(target3)} 게임머니
+` +
+        `5% 수익 : 약 ${formatDecimal(target5)} 게임머니
+` +
+        `10% 수익 : 약 ${formatDecimal(target10)} 게임머니
+` +
+        `15% 수익 : 약 ${formatDecimal(target15)} 게임머니
 
-${verdict}`;
+` +
+        verdict;
     }
 
     document.querySelectorAll('.comma-input').forEach(input => {
