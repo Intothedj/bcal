@@ -5,35 +5,33 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>캐시 / 포인트 / 게임머니 계산기</title>
   <style>
-    * {
-      box-sizing: border-box;
-    }
+    * { box-sizing: border-box; }
 
     body {
       margin: 0;
-      font-family: Arial, sans-serif;
-      background: #f4f6f8;
-      color: #222;
+      min-height: 100vh;
+      padding: 20px;
       display: flex;
       justify-content: center;
       align-items: center;
-      min-height: 100vh;
-      padding: 20px;
+      font-family: Arial, sans-serif;
+      color: #222;
+      background: #f4f6f8;
     }
 
     .wrap {
       width: 100%;
-      max-width: 500px;
-      background: #fff;
+      max-width: 520px;
       padding: 28px;
       border-radius: 18px;
+      background: #fff;
       box-shadow: 0 10px 30px rgba(0, 0, 0, 0.08);
     }
 
     h1 {
       margin: 0 0 20px;
-      font-size: 24px;
       text-align: center;
+      font-size: 24px;
     }
 
     .tabs {
@@ -45,24 +43,19 @@
 
     .tab-btn {
       margin: 0;
-      background: #eef1f5;
       color: #333;
+      background: #eef1f5;
       border: 1px solid #d6dbe1;
     }
 
     .tab-btn.active {
+      color: #fff;
       background: #4f7cff;
-      color: white;
       border-color: #4f7cff;
     }
 
-    .section {
-      display: none;
-    }
-
-    .section.active {
-      display: block;
-    }
+    .section { display: none; }
+    .section.active { display: block; }
 
     .ratio-row {
       display: grid;
@@ -78,65 +71,67 @@
       gap: 10px;
     }
 
+    .input-box { margin-bottom: 14px; }
+
+    .small-title {
+      margin: 18px 0 10px;
+      padding-top: 12px;
+      border-top: 1px solid #edf0f3;
+      color: #333;
+      font-size: 15px;
+      font-weight: bold;
+    }
+
     label {
       display: block;
+      margin-bottom: 6px;
       font-size: 14px;
       font-weight: bold;
-      margin-bottom: 6px;
     }
 
     input, select, button {
       width: 100%;
       padding: 13px 14px;
-      font-size: 16px;
-      border-radius: 10px;
       border: 1px solid #d6dbe1;
+      border-radius: 10px;
       outline: none;
+      font-size: 16px;
     }
 
-    input:focus, select:focus {
-      border-color: #4f7cff;
-    }
+    input:focus, select:focus { border-color: #4f7cff; }
+    input:disabled, select:disabled { background: #f1f3f5; color: #999; }
 
     .colon {
       margin-top: 22px;
+      color: #777;
       font-size: 20px;
       font-weight: bold;
-      color: #777;
-    }
-
-    .input-box {
-      margin-bottom: 14px;
     }
 
     button {
       margin-top: 8px;
       border: none;
+      color: #fff;
       background: #4f7cff;
-      color: white;
       font-weight: bold;
       cursor: pointer;
     }
 
-    button:hover {
-      background: #3f68d8;
-    }
+    button:hover { background: #3f68d8; }
 
     .result {
       margin-top: 20px;
       padding: 16px;
       border-radius: 12px;
       background: #f0f4ff;
-      line-height: 1.7;
       font-size: 16px;
       font-weight: bold;
+      line-height: 1.7;
       word-break: keep-all;
       white-space: pre-line;
     }
 
-    .red-text {
-      color: #e60000;
-    }
+    .red-text { color: #e60000; }
 
     .hint {
       margin-top: 12px;
@@ -145,19 +140,8 @@
       line-height: 1.5;
     }
 
-    .small-title {
-      margin: 18px 0 10px;
-      padding-top: 12px;
-      border-top: 1px solid #edf0f3;
-      font-size: 15px;
-      font-weight: bold;
-      color: #333;
-    }
-
     @media (max-width: 460px) {
-      .grid-2 {
-        grid-template-columns: 1fr;
-      }
+      .grid-2 { grid-template-columns: 1fr; }
     }
   </style>
 </head>
@@ -170,19 +154,16 @@
       <button class="tab-btn" onclick="showTab('efficiency', this)">효율 비교</button>
     </div>
 
-    <!-- 비율 계산 메뉴 -->
     <div id="ratio" class="section active">
       <div class="ratio-row">
         <div>
           <label for="baseCash">캐시 입력</label>
-          <input id="baseCash" type="text" inputmode="numeric" placeholder="예: 53000" />
+          <input id="baseCash" class="comma-input" type="text" inputmode="numeric" placeholder="예: 53000" />
         </div>
-
         <div class="colon">:</div>
-
         <div>
           <label for="baseMoney">게임머니 입력</label>
-          <input id="baseMoney" type="text" inputmode="numeric" placeholder="예: 100000000" />
+          <input id="baseMoney" class="comma-input" type="text" inputmode="numeric" placeholder="예: 100000000" />
         </div>
       </div>
 
@@ -196,70 +177,87 @@
 
       <div class="input-box">
         <label for="targetValue">캐시 OR 게임머니</label>
-        <input id="targetValue" type="text" inputmode="numeric" placeholder="계산할 값을 입력하세요" />
+        <input id="targetValue" class="comma-input" type="text" inputmode="numeric" placeholder="계산할 값을 입력하세요" />
       </div>
 
       <button onclick="calculateRatio()">계산 버튼</button>
-
       <div id="ratioResult" class="result">결과 : 값을 입력하고 계산 버튼을 눌러주세요.</div>
-
-      <div class="hint">
-        예시: 캐시 53,000원이 게임머니 1억이면<br />
-        기준값에 53000 : 100000000 을 입력하면 됩니다.
-      </div>
     </div>
 
-    <!-- 효율 비교 메뉴 -->
     <div id="efficiency" class="section">
       <div class="small-title">1. 기준 비율 입력</div>
 
       <div class="grid-2">
         <div class="input-box">
           <label for="effCash">캐시</label>
-          <input id="effCash" type="text" inputmode="numeric" placeholder="예: 54000" />
+          <input id="effCash" class="comma-input" type="text" inputmode="numeric" placeholder="예: 54000" />
         </div>
-
         <div class="input-box">
           <label for="effCashMoney">해당 게임머니</label>
-          <input id="effCashMoney" type="text" inputmode="numeric" placeholder="예: 100000000" />
+          <input id="effCashMoney" class="comma-input" type="text" inputmode="numeric" placeholder="예: 100000000" />
         </div>
       </div>
 
       <div class="grid-2">
         <div class="input-box">
           <label for="effPoint">포인트</label>
-          <input id="effPoint" type="text" inputmode="numeric" placeholder="예: 68000" />
+          <input id="effPoint" class="comma-input" type="text" inputmode="numeric" placeholder="예: 68000" />
         </div>
-
         <div class="input-box">
           <label for="effPointMoney">해당 게임머니</label>
-          <input id="effPointMoney" type="text" inputmode="numeric" placeholder="예: 100000000" />
+          <input id="effPointMoney" class="comma-input" type="text" inputmode="numeric" placeholder="예: 100000000" />
         </div>
       </div>
 
-      <div class="small-title">2. 아이템 가격 입력</div>
+      <div class="small-title">2. 개당가격과 구매 개수 입력</div>
+
+      <div class="input-box">
+        <label for="itemQuantity">구매 개수</label>
+        <input id="itemQuantity" class="comma-input" type="text" inputmode="numeric" value="1" placeholder="예: 30" />
+      </div>
 
       <div class="grid-2">
         <div class="input-box">
-          <label for="itemMoneyPrice">게임머니 가격</label>
-          <input id="itemMoneyPrice" type="text" inputmode="numeric" placeholder="예: 1200000" />
+          <label for="itemMoneyPrice">게임머니 개당가격</label>
+          <input id="itemMoneyPrice" class="comma-input" type="text" inputmode="numeric" placeholder="예: 1200000" />
         </div>
-
         <div class="input-box">
-          <label for="itemPointPrice">포인트 가격</label>
-          <input id="itemPointPrice" type="text" inputmode="numeric" placeholder="예: 600" />
+          <label for="itemPointPrice">포인트 개당가격</label>
+          <input id="itemPointPrice" class="comma-input" type="text" inputmode="numeric" placeholder="예: 600" />
         </div>
       </div>
 
-      <button onclick="compareEfficiency()">어떤 구매가 더 저렴한지 계산</button>
+      <div class="small-title">3. 수수료 설정</div>
 
-      <div id="efficiencyResult" class="result">결과 : 기준 비율과 아이템 가격을 입력해주세요.</div>
+      <div class="grid-2">
+        <div class="input-box">
+          <label for="feeEnabled">수수료 적용</label>
+          <select id="feeEnabled" onchange="toggleFeeInputs()">
+            <option value="off">비활성화</option>
+            <option value="on">활성화</option>
+          </select>
+        </div>
+        <div class="input-box">
+          <label for="feePercent">수수료 (%)</label>
+          <input id="feePercent" type="text" inputmode="decimal" value="5" placeholder="예: 5" disabled />
+        </div>
+      </div>
+
+      <div class="input-box">
+        <label for="feeTarget">수수료 차감 대상</label>
+        <select id="feeTarget" disabled>
+          <option value="money">게임머니 금액에서 차감</option>
+          <option value="point">포인트 금액에서 차감</option>
+          <option value="both">둘 다 차감</option>
+        </select>
+      </div>
+
+      <button onclick="compareEfficiency()">어떤 구매가 더 저렴한지 계산</button>
+      <div id="efficiencyResult" class="result">결과 : 기준 비율과 개당가격을 입력해주세요.</div>
 
       <div class="hint">
-        예시: 54,000캐시 = 1억 게임머니,<br />
-        68,000포인트 = 1억 게임머니,<br />
-        아이템 가격이 120만 게임머니 또는 600포인트일 때<br />
-        둘을 캐시 기준으로 환산해서 비교합니다.
+        개당가격이 272이고 구매 개수가 30개라면 총액은 자동으로 8,160으로 계산됩니다.<br />
+        수수료가 필요한 경우 활성화 후 5%라면 숫자 5를 입력하면 됩니다.
       </div>
     </div>
   </div>
@@ -278,16 +276,16 @@
     }
 
     function showTab(tabId, button) {
-      document.querySelectorAll('.section').forEach(section => {
-        section.classList.remove('active');
-      });
-
-      document.querySelectorAll('.tab-btn').forEach(btn => {
-        btn.classList.remove('active');
-      });
-
+      document.querySelectorAll('.section').forEach(section => section.classList.remove('active'));
+      document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
       document.getElementById(tabId).classList.add('active');
       button.classList.add('active');
+    }
+
+    function toggleFeeInputs() {
+      const enabled = document.getElementById('feeEnabled').value === 'on';
+      document.getElementById('feePercent').disabled = !enabled;
+      document.getElementById('feeTarget').disabled = !enabled;
     }
 
     function calculateRatio() {
@@ -323,64 +321,76 @@
       const pointMoney = onlyNumber(document.getElementById('effPointMoney').value);
       const itemMoneyPrice = onlyNumber(document.getElementById('itemMoneyPrice').value);
       const itemPointPrice = onlyNumber(document.getElementById('itemPointPrice').value);
+      const itemQuantity = onlyNumber(document.getElementById('itemQuantity').value) || 1;
+      const feeEnabled = document.getElementById('feeEnabled').value === 'on';
+      const feePercent = onlyNumber(document.getElementById('feePercent').value) || 0;
+      const feeTarget = document.getElementById('feeTarget').value;
       const result = document.getElementById('efficiencyResult');
 
       if (!cash || !cashMoney || !point || !pointMoney || !itemMoneyPrice || !itemPointPrice) {
-        result.textContent = '결과 : 캐시/게임머니 비율, 포인트/게임머니 비율, 아이템 가격을 모두 입력해주세요.';
+        result.textContent = '결과 : 기준 비율과 개당가격을 모두 입력해주세요.';
         return;
       }
 
-      if (cash <= 0 || cashMoney <= 0 || point <= 0 || pointMoney <= 0 || itemMoneyPrice <= 0 || itemPointPrice <= 0) {
-        result.textContent = '결과 : 0보다 큰 숫자만 입력해주세요.';
+      if (cash <= 0 || cashMoney <= 0 || point <= 0 || pointMoney <= 0 || itemMoneyPrice <= 0 || itemPointPrice <= 0 || itemQuantity <= 0 || feePercent < 0 || feePercent >= 100) {
+        result.textContent = '결과 : 가격과 개수는 0보다 커야 하며, 수수료는 0 이상 100 미만으로 입력해주세요.';
         return;
       }
 
-      // 1 게임머니의 캐시 가치
       const cashPerMoney = cash / cashMoney;
-
-      // 1 포인트가 게임머니 기준으로 얼마인지
       const moneyPerPoint = pointMoney / point;
-
-      // 1 포인트의 캐시 환산 가치
       const cashPerPoint = moneyPerPoint * cashPerMoney;
 
-      // 아이템을 게임머니로 샀을 때 캐시 환산 가격
-      const moneyBuyCashValue = itemMoneyPrice * cashPerMoney;
+      let totalMoneyPrice = itemMoneyPrice * itemQuantity;
+      let totalPointPrice = itemPointPrice * itemQuantity;
 
-      // 아이템을 포인트로 샀을 때 캐시 환산 가격
-      const pointBuyCashValue = itemPointPrice * cashPerPoint;
+      if (feeEnabled) {
+        const feeMultiplier = 1 - (feePercent / 100);
+        if (feeTarget === 'money' || feeTarget === 'both') totalMoneyPrice *= feeMultiplier;
+        if (feeTarget === 'point' || feeTarget === 'both') totalPointPrice *= feeMultiplier;
+      }
 
+      const moneyBuyCashValue = totalMoneyPrice * cashPerMoney;
+      const pointBuyCashValue = totalPointPrice * cashPerPoint;
       const diff = Math.abs(moneyBuyCashValue - pointBuyCashValue);
 
       let winnerText = '';
       if (moneyBuyCashValue < pointBuyCashValue) {
-        winnerText = `<span class="red-text">게임머니</span>로 구매하는 게 더 <span class="red-text">저렴합니다</span>.
-약 ${formatDecimal(diff)} 캐시만큼 이득입니다.`;
+        winnerText = `<span class="red-text">게임머니</span>로 구매하는 게 더 <span class="red-text">저렴합니다</span>.\n약 ${formatDecimal(diff)} 캐시만큼 이득입니다.`;
       } else if (pointBuyCashValue < moneyBuyCashValue) {
-        winnerText = `<span class="red-text">포인트</span>로 구매하는 게 더 <span class="red-text">저렴합니다</span>.
-약 ${formatDecimal(diff)} 캐시만큼 이득입니다.`;
+        winnerText = `<span class="red-text">포인트</span>로 구매하는 게 더 <span class="red-text">저렴합니다</span>.\n약 ${formatDecimal(diff)} 캐시만큼 이득입니다.`;
       } else {
         winnerText = '둘 다 같은 가격입니다.';
       }
 
-      result.innerHTML =
-        `게임머니 구매 환산가 : 약 ${formatDecimal(moneyBuyCashValue)} 캐시
-` +
-        `포인트 구매 환산가 : 약 ${formatDecimal(pointBuyCashValue)} 캐시
+      const feeText = feeEnabled
+        ? `수수료 : ${formatDecimal(feePercent)}% 차감 적용\n`
+        : '수수료 : 미적용\n';
 
-` +
+      result.innerHTML =
+        `수량 : ${formatNumber(itemQuantity)}개\n` +
+        `게임머니 총액 : ${formatDecimal(totalMoneyPrice)}\n` +
+        `포인트 총액 : ${formatDecimal(totalPointPrice)}\n` +
+        feeText +
+        `게임머니 구매 환산가 : 약 ${formatDecimal(moneyBuyCashValue)} 캐시\n` +
+        `포인트 구매 환산가 : 약 ${formatDecimal(pointBuyCashValue)} 캐시\n\n` +
         winnerText;
     }
 
-    // 입력할 때 자동으로 콤마 표시
-    document.querySelectorAll('input').forEach(input => {
+    document.querySelectorAll('.comma-input').forEach(input => {
       input.addEventListener('input', () => {
         const raw = input.value.replace(/[^0-9]/g, '');
         input.value = raw ? Number(raw).toLocaleString('ko-KR') : '';
       });
     });
 
-    // 예시값 자동 입력
+    document.getElementById('feePercent').addEventListener('input', event => {
+      let raw = event.target.value.replace(/[^0-9.]/g, '');
+      const parts = raw.split('.');
+      if (parts.length > 2) raw = `${parts.shift()}.${parts.join('')}`;
+      event.target.value = raw;
+    });
+
     document.getElementById('effCash').value = Number(54000).toLocaleString('ko-KR');
     document.getElementById('effCashMoney').value = Number(100000000).toLocaleString('ko-KR');
     document.getElementById('effPoint').value = Number(68000).toLocaleString('ko-KR');
