@@ -176,8 +176,29 @@
       </div>
 
       <div class="input-box">
-        <label for="targetValue">캐시 OR 게임머니</label>
-        <input id="targetValue" class="comma-input" type="text" inputmode="numeric" placeholder="계산할 값을 입력하세요" />
+        <label for="targetValue">캐시 OR 게임머니 개당가격</label>
+        <input id="targetValue" class="comma-input" type="text" inputmode="numeric" placeholder="계산할 개당가격을 입력하세요" />
+      </div>
+
+      <div class="input-box">
+        <label for="ratioQuantity">구매 개수</label>
+        <input id="ratioQuantity" class="comma-input" type="text" inputmode="numeric" value="1" placeholder="예: 30" />
+      </div>
+
+      <div class="small-title">수수료 설정</div>
+
+      <div class="grid-2">
+        <div class="input-box">
+          <label for="ratioFeeEnabled">수수료 적용</label>
+          <select id="ratioFeeEnabled" onchange="toggleRatioFeeInputs()">
+            <option value="off">비활성화</option>
+            <option value="on">활성화</option>
+          </select>
+        </div>
+        <div class="input-box">
+          <label for="ratioFeePercent">수수료 (%)</label>
+          <input id="ratioFeePercent" type="text" inputmode="decimal" value="5" placeholder="예: 5" disabled />
+        </div>
       </div>
 
       <button onclick="calculateRatio()">계산 버튼</button>
@@ -288,29 +309,56 @@
       document.getElementById('feeTarget').disabled = !enabled;
     }
 
+    function toggleRatioFeeInputs() {
+      const enabled = document.getElementById('ratioFeeEnabled').value === 'on';
+      document.getElementById('ratioFeePercent').disabled = !enabled;
+    }
+
     function calculateRatio() {
       const baseCash = onlyNumber(document.getElementById('baseCash').value);
       const baseMoney = onlyNumber(document.getElementById('baseMoney').value);
-      const targetValue = onlyNumber(document.getElementById('targetValue').value);
+      const unitValue = onlyNumber(document.getElementById('targetValue').value);
+      const quantity = onlyNumber(document.getElementById('ratioQuantity').value) || 1;
+      const feeEnabled = document.getElementById('ratioFeeEnabled').value === 'on';
+      const feePercent = onlyNumber(document.getElementById('ratioFeePercent').value) || 0;
       const mode = document.getElementById('mode').value;
       const result = document.getElementById('ratioResult');
 
-      if (!baseCash || !baseMoney || !targetValue) {
-        result.textContent = '결과 : 기준 캐시, 기준 게임머니, 계산할 값을 모두 입력해주세요.';
+      if (!baseCash || !baseMoney || !unitValue) {
+        result.textContent = '결과 : 기준 캐시, 기준 게임머니, 개당가격을 모두 입력해주세요.';
         return;
       }
 
-      if (baseCash <= 0 || baseMoney <= 0 || targetValue <= 0) {
-        result.textContent = '결과 : 0보다 큰 숫자만 입력해주세요.';
+      if (baseCash <= 0 || baseMoney <= 0 || unitValue <= 0 || quantity <= 0 || feePercent < 0 || feePercent >= 100) {
+        result.textContent = '결과 : 가격과 개수는 0보다 커야 하며, 수수료는 0 이상 100 미만으로 입력해주세요.';
         return;
       }
+
+      const originalTotal = unitValue * quantity;
+      const feeMultiplier = feeEnabled ? 1 - (feePercent / 100) : 1;
+      const appliedTotal = originalTotal * feeMultiplier;
+      const feeText = feeEnabled
+        ? `수수료 : ${formatDecimal(feePercent)}% 차감 적용\n`
+        : '수수료 : 미적용\n';
 
       if (mode === 'cashToMoney') {
-        const gameMoney = targetValue * baseMoney / baseCash;
-        result.textContent = `결과 : ${formatNumber(targetValue)} 캐시에 해당하는 게임머니는 ${formatNumber(gameMoney)} 입니다.`;
+        const gameMoney = appliedTotal * baseMoney / baseCash;
+        result.textContent =
+          `개당가격 : ${formatDecimal(unitValue)} 캐시\n` +
+          `수량 : ${formatNumber(quantity)}개\n` +
+          `차감 전 총액 : ${formatDecimal(originalTotal)} 캐시\n` +
+          feeText +
+          `적용 총액 : ${formatDecimal(appliedTotal)} 캐시\n\n` +
+          `결과 : ${formatDecimal(appliedTotal)} 캐시에 해당하는 게임머니는 ${formatNumber(gameMoney)} 입니다.`;
       } else {
-        const cash = targetValue * baseCash / baseMoney;
-        result.textContent = `결과 : ${formatNumber(targetValue)} 게임머니에 해당하는 캐시는 ${formatDecimal(cash)} 입니다.`;
+        const cash = appliedTotal * baseCash / baseMoney;
+        result.textContent =
+          `개당가격 : ${formatDecimal(unitValue)} 게임머니\n` +
+          `수량 : ${formatNumber(quantity)}개\n` +
+          `차감 전 총액 : ${formatDecimal(originalTotal)} 게임머니\n` +
+          feeText +
+          `적용 총액 : ${formatDecimal(appliedTotal)} 게임머니\n\n` +
+          `결과 : ${formatDecimal(appliedTotal)} 게임머니에 해당하는 캐시는 ${formatDecimal(cash)} 입니다.`;
       }
     }
 
@@ -384,12 +432,17 @@
       });
     });
 
-    document.getElementById('feePercent').addEventListener('input', event => {
-      let raw = event.target.value.replace(/[^0-9.]/g, '');
-      const parts = raw.split('.');
-      if (parts.length > 2) raw = `${parts.shift()}.${parts.join('')}`;
-      event.target.value = raw;
-    });
+    function bindPercentInput(id) {
+      document.getElementById(id).addEventListener('input', event => {
+        let raw = event.target.value.replace(/[^0-9.]/g, '');
+        const parts = raw.split('.');
+        if (parts.length > 2) raw = `${parts.shift()}.${parts.join('')}`;
+        event.target.value = raw;
+      });
+    }
+
+    bindPercentInput('feePercent');
+    bindPercentInput('ratioFeePercent');
 
     document.getElementById('effCash').value = Number(54000).toLocaleString('ko-KR');
     document.getElementById('effCashMoney').value = Number(100000000).toLocaleString('ko-KR');
